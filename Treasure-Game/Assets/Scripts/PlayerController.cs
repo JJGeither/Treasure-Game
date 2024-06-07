@@ -4,7 +4,9 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Public Variables")]
+    public static PlayerController instance;
+
+    [Header("Movement Variables")]
     [SerializeField] public float playerMaxSpeed;
     [SerializeField] public float playerMinSpeed;
     [SerializeField] public float acceleration;
@@ -12,17 +14,18 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float additionalGravity = 10f;
 
     [Header("Raycast Settings")]
-    [SerializeField] private float raycastDistance = 3.0f;
     [SerializeField] private float sphereRadius;
 
     [Header("Layer Settings")]
     [SerializeField] private LayerMask groundLayer;
 
     private float _playerSpeed;
-    private float _speedSmoothVelocity;
     private float verticalInput;
     private float horizontalInput;
     private Rigidbody _rb;
+    public Transform heldObject;
+
+    void Awake() => instance = this;
 
     // Start is called before the first frame update
     void Start()
@@ -36,9 +39,7 @@ public class PlayerController : MonoBehaviour
 
         CheckIfTouchingGround();
 
-        // Get mouse X input for rotation
-        float mouseX = Input.GetAxis("Mouse X");
-        RotatePlayer(mouseX);
+        RotatePlayer();
     }
 
     private void FixedUpdate()
@@ -47,9 +48,11 @@ public class PlayerController : MonoBehaviour
         ApplyPlayerMovement();
     }
 
-    void RotatePlayer(float mouseX)
+    void RotatePlayer()
     {
+        float mouseX = Input.GetAxis("Mouse X");
         mouseX = (mouseX + 180.0f) % 360.0f - 180.0f;
+
         Quaternion targetRotation = Quaternion.Euler(0, transform.eulerAngles.y + mouseX, 0);
         _rb.MoveRotation(targetRotation);
     }
@@ -69,21 +72,20 @@ public class PlayerController : MonoBehaviour
         // Clamp the target speed
         _playerSpeed = Mathf.Max(_playerSpeed, 0f);
         _playerSpeed = Mathf.Clamp(_playerSpeed, playerMinSpeed, playerMaxSpeed);
-        Debug.Log(_playerSpeed);
     }
 
     void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position + Vector3.down * (sphereRadius * 1.6f), sphereRadius);
+        Gizmos.DrawWireSphere(transform.position + Vector3.down * (sphereRadius * 1.51f), sphereRadius);
     }
 
     void CheckIfTouchingGround()
     {
         // Perform the raycast
-        if (Physics.CheckSphere(transform.position + Vector3.down * (sphereRadius * 1.6f), sphereRadius, groundLayer))
+        if (Physics.CheckSphere(transform.position + Vector3.down * (sphereRadius * 1.51f), sphereRadius, groundLayer))
         {
-            Debug.Log("Touching ground: ");
+
         }
         else
         {
