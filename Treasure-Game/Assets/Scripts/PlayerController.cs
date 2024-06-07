@@ -9,12 +9,17 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float playerMinSpeed;
     [SerializeField] public float acceleration;
     [SerializeField] public float deceleration;
+    [SerializeField] public float additionalGravity = 10f;
 
+    [Header("Raycast Settings")]
+    [SerializeField] private float raycastDistance = 3.0f;
+    [SerializeField] private float sphereRadius;
+
+    [Header("Layer Settings")]
+    [SerializeField] private LayerMask groundLayer;
 
     private float _playerSpeed;
-    private float _targetSpeed;
     private float _speedSmoothVelocity;
-    private float _jumpForce = 0;
     private float verticalInput;
     private float horizontalInput;
     private Rigidbody _rb;
@@ -27,40 +32,19 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Get player inputs
-        verticalInput = Input.GetAxis("Vertical");
-        horizontalInput = Input.GetAxis("Horizontal");
+        ObtainPlayerMovementInput();
 
-        // Calculate target speed
-        if (verticalInput != 0.0f || horizontalInput != 0.0f)
-            _targetSpeed += acceleration;
-        else
-            _targetSpeed -= deceleration;
-
-        // Clamp the target speed
-        _targetSpeed = Mathf.Clamp(_targetSpeed, playerMinSpeed, playerMaxSpeed);
+        CheckIfTouchingGround();
 
         // Get mouse X input for rotation
         float mouseX = Input.GetAxis("Mouse X");
         RotatePlayer(mouseX);
-
-
     }
 
     private void FixedUpdate()
     {
-        // Smoothly adjust the playerSpeed towards the targetSpeed
-        _playerSpeed = Mathf.SmoothDamp(_playerSpeed, _targetSpeed, ref _speedSmoothVelocity, acceleration);
-
-        float verticalMovement = verticalInput * _playerSpeed;
-        float horizontalMovement = horizontalInput * _playerSpeed;
-
-        Vector3 movement = new Vector3(horizontalMovement, 0.0f, verticalMovement);
-
-        movement = Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0) * movement;
-
-        Vector3 totalVelocity = movement + Vector3.up * _jumpForce;
-        _rb.velocity = totalVelocity;
+        // Applies the movement from user input and additional downward force
+        ApplyPlayerMovement();
     }
 
     void RotatePlayer(float mouseX)
@@ -69,5 +53,57 @@ public class PlayerController : MonoBehaviour
         Quaternion targetRotation = Quaternion.Euler(0, transform.eulerAngles.y + mouseX, 0);
         _rb.MoveRotation(targetRotation);
     }
-}
 
+    void ObtainPlayerMovementInput()
+    {
+        // Get player inputs
+        verticalInput = Input.GetAxis("Vertical");
+        horizontalInput = Input.GetAxis("Horizontal");
+
+        // Calculate target speed
+        if (verticalInput != 0.0f || horizontalInput != 0.0f)
+            _playerSpeed += acceleration;
+        else
+            _playerSpeed -= deceleration;
+
+        // Clamp the target speed
+        _playerSpeed = Mathf.Max(_playerSpeed, 0f);
+        _playerSpeed = Mathf.Clamp(_playerSpeed, playerMinSpeed, playerMaxSpeed);
+        Debug.Log(_playerSpeed);
+    }
+
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position + Vector3.down * (sphereRadius * 1.6f), sphereRadius);
+    }
+
+    void CheckIfTouchingGround()
+    {
+        // Perform the raycast
+        if (Physics.CheckSphere(transform.position + Vector3.down * (sphereRadius * 1.6f), sphereRadius, groundLayer))
+        {
+            Debug.Log("Touching ground: ");
+        }
+        else
+        {
+            Debug.Log("Not touching ground");
+            _rb.AddForce(Vector3.down * additionalGravity, ForceMode.Acceleration);
+        }
+    }
+
+    void ApplyPlayerMovement()
+    {
+        float verticalMovement = verticalInput * _playerSpeed;
+        float horizontalMovement = horizontalInput * _playerSpeed;
+
+        Vector3 movement = new Vector3(horizontalMovement, 0.0f, verticalMovement);
+
+        movement = Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0) * movement;
+
+        Vector3 totalVelocity = movement;
+
+        // Apply the calculated velocity
+        _rb.velocity = totalVelocity;
+    }
+}

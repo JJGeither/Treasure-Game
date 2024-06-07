@@ -323,9 +323,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 1972690035}
-  offset: {x: 0, y: 2, z: -5}
-  followSpeed: 10
-  rotationSpeed: 10
+  offset: {x: 0, y: 5, z: -10}
+  followSpeed: 100
+  rotationSpeed: 100
 --- !u!1 &1191197428
 GameObject:
   m_ObjectHideFlags: 0
@@ -419,10 +419,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3df20da2346ab8d4b841991d5896decb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerMaxSpeed: 10
+  playerMaxSpeed: 20
   playerMinSpeed: 1
-  acceleration: 3
-  deceleration: 2
+  acceleration: 0.5
+  deceleration: 8
 --- !u!1001 &5763680948118140844
 PrefabInstance:
   m_ObjectHideFlags: 0
