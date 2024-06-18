@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class InteractorDetector : MonoBehaviour
 {
-    private List<Interactor> _interactableObjects = new List<Interactor>();
+    private List<Interactee> _interactableObjects = new List<Interactee>();
     public Canvas _canvas;
 
 
@@ -14,7 +14,12 @@ public class InteractorDetector : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            InteractWithObjects();
+            InteractWithObjects(PlayerController.instance.interactor);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            InteractWithObjects(PlayerController.instance.followingDrones[0].interactor);
         }
 
         if (_interactableObjects.Count > 0)
@@ -27,11 +32,12 @@ public class InteractorDetector : MonoBehaviour
         }
     }
 
-    private void InteractWithObjects()
+    private void InteractWithObjects(Interactor interactor)
     {
         if (_interactableObjects.Count > 0)
         {
-            _interactableObjects[0].Interact();
+            interactor.Interact(_interactableObjects[0]);
+            //_interactableObjects[0].Interact(interactor);
             _interactableObjects.RemoveAt(0);
         }
     }
@@ -39,7 +45,7 @@ public class InteractorDetector : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
 
-        var interactable = other.GetComponent<Interactor>();
+        var interactable = other.GetComponent<Interactee>();
 
         if (interactable != null)
         {
@@ -51,7 +57,7 @@ public class InteractorDetector : MonoBehaviour
     private void OnTriggerExit(Collider other)
     {
 
-        var interactable = other.GetComponent<Interactor>();
+        var interactable = other.GetComponent<Interactee>();
 
         if (_interactableObjects.Contains(interactable))
         {

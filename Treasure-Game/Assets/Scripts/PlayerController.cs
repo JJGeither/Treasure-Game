@@ -19,11 +19,20 @@ public class PlayerController : MonoBehaviour
     [Header("Layer Settings")]
     [SerializeField] private LayerMask groundLayer;
 
+    [Header("Money Variables")]
+    public  float moneyAmount = 0;
+
+    [Header("Drone Variables")]
+    public List<DroneScript> followingDrones = new List<DroneScript>();
+
+    [Header("Script References")]
+    public Interactor interactor;
+
+
     private float _playerSpeed;
     private float verticalInput;
     private float horizontalInput;
     private Rigidbody _rb;
-    public Transform heldObject;
 
     void Awake() => instance = this;
 
@@ -31,6 +40,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         _rb = GetComponent<Rigidbody>();
+        interactor = GetComponent<Interactor>();
     }
 
     void Update()
@@ -83,11 +93,7 @@ public class PlayerController : MonoBehaviour
     void CheckIfTouchingGround()
     {
         // Perform the raycast
-        if (Physics.CheckSphere(transform.position + Vector3.down * (sphereRadius * 1.51f), sphereRadius, groundLayer))
-        {
-
-        }
-        else
+        if (!Physics.CheckSphere(transform.position + Vector3.down * (sphereRadius * 1.51f), sphereRadius, groundLayer))
         {
             Debug.Log("Not touching ground");
             _rb.AddForce(Vector3.down * additionalGravity, ForceMode.Acceleration);

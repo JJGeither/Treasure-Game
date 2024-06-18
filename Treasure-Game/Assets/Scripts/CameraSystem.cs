@@ -24,7 +24,6 @@ public class CameraSystem : MonoBehaviour
         float mouseY = Input.GetAxis("Mouse Y");
         currentYRotation -= mouseY * rotationSpeed * Time.deltaTime;
         currentYRotation = Mathf.Clamp(currentYRotation, minYRotation, maxYRotation);
-        Debug.Log(currentYRotation);
 
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         currentDistance -= scroll * zoomSpeed;
