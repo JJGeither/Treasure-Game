@@ -17,9 +17,14 @@ public class InteractorDetector : MonoBehaviour
             InteractWithObjects(PlayerController.instance.interactor);
         }
 
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.Q) && PlayerController.instance.followingDrones.Count > 0)
         {
+           
             InteractWithObjects(PlayerController.instance.followingDrones[0].interactor);
+        }
+
+        if (Input.GetKeyDown(KeyCode.V)) {
+            PlayerController.instance.followingDrones[0].MoveDroneTo(Vector3.zero);
         }
 
         if (_interactableObjects.Count > 0)

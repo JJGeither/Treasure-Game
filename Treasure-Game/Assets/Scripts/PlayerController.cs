@@ -12,6 +12,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float acceleration;
     [SerializeField] public float deceleration;
     [SerializeField] public float additionalGravity = 10f;
+    [SerializeField] public float jumpHeight;
 
     [Header("Raycast Settings")]
     [SerializeField] private float sphereRadius;
@@ -20,45 +21,81 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
 
     [Header("Money Variables")]
-    public  float moneyAmount = 0;
+    public float moneyAmount = 0;
 
     [Header("Drone Variables")]
     public List<DroneScript> followingDrones = new List<DroneScript>();
 
+    [Header("Oxygen Variables")]
+    public float OxygenLevel;
+    public float OxygenMaxLevel;
+
+    private IEnumerator DecreaseOxygenLevel()
+    {
+        while (OxygenLevel > 0)
+        {
+            yield return new WaitForSeconds(10);
+            OxygenLevel -= 1;
+            Debug.Log("Oxygen Level: " + OxygenLevel);
+        }
+
+        // Handle what happens when oxygen level reaches zero, if needed
+        // For example, you might call a method to handle player death or other game logic
+        // PlayerDeath();
+    }
+
     [Header("Script References")]
     public Interactor interactor;
-
 
     private float _playerSpeed;
     private float verticalInput;
     private float horizontalInput;
+
+    // Jumping Inputs
+    private bool jumpInput;
+    private bool isJumping = false;
+    private float jumpForce = 0.0f;
+    private bool isGrounded = false;
     private Rigidbody _rb;
 
     void Awake() => instance = this;
 
-    // Start is called before the first frame update
     void Start()
     {
         _rb = GetComponent<Rigidbody>();
         interactor = GetComponent<Interactor>();
+        OxygenLevel = OxygenMaxLevel;
+        StartCoroutine(DecreaseOxygenLevel());
     }
 
     void Update()
     {
         ObtainPlayerMovementInput();
-
         CheckIfTouchingGround();
-
         RotatePlayer();
     }
 
-    private void FixedUpdate()
+    void FixedUpdate()
     {
-        // Applies the movement from user input and additional downward force
         ApplyPlayerMovement();
     }
 
-    void RotatePlayer()
+    private void ObtainPlayerMovementInput()
+    {
+        verticalInput = Input.GetAxis("Vertical");
+        horizontalInput = Input.GetAxis("Horizontal");
+        jumpInput = Input.GetKey(KeyCode.LeftShift);
+
+        if (verticalInput != 0.0f || horizontalInput != 0.0f)
+            _playerSpeed += acceleration;
+        else
+            _playerSpeed -= deceleration;
+
+        _playerSpeed = Mathf.Max(_playerSpeed, 0f);
+        _playerSpeed = Mathf.Clamp(_playerSpeed, playerMinSpeed, playerMaxSpeed);
+    }
+
+    private void RotatePlayer()
     {
         float mouseX = Input.GetAxis("Mouse X");
         mouseX = (mouseX + 180.0f) % 360.0f - 180.0f;
@@ -67,51 +104,83 @@ public class PlayerController : MonoBehaviour
         _rb.MoveRotation(targetRotation);
     }
 
-    void ObtainPlayerMovementInput()
+    private void CheckIfTouchingGround()
     {
-        // Get player inputs
-        verticalInput = Input.GetAxis("Vertical");
-        horizontalInput = Input.GetAxis("Horizontal");
+        if (!Physics.CheckSphere(transform.position + Vector3.down * (sphereRadius * 1.51f), sphereRadius, groundLayer))
+        {
+            isGrounded = false;
+            if (!isJumping)
+            {
+                _rb.AddForce(Vector3.down * additionalGravity, ForceMode.Acceleration);
+            }
 
-        // Calculate target speed
-        if (verticalInput != 0.0f || horizontalInput != 0.0f)
-            _playerSpeed += acceleration;
-        else
-            _playerSpeed -= deceleration;
+        } else
+        {
+            isGrounded = true;
+        }
+    }
 
-        // Clamp the target speed
-        _playerSpeed = Mathf.Max(_playerSpeed, 0f);
-        _playerSpeed = Mathf.Clamp(_playerSpeed, playerMinSpeed, playerMaxSpeed);
+    private void JumpPhysics()
+    {
+        DetermineIfJumping();
+        ApplyJumpForce();
+        ReduceJumpOvertime();
+    }
+
+    private void DetermineIfJumping()
+    {
+        if (jumpInput && isGrounded)
+        {
+            isJumping = true;
+            jumpForce = jumpHeight;
+            Debug.Log("Space key pressed");
+        }
+    }
+
+    private void ReduceJumpOvertime()
+    {
+        if (isJumping)
+        {
+            if (!jumpInput)
+                jumpForce = jumpForce / 2;
+
+            // Gradually decrease jumpForce to make it smoother
+            jumpForce -= 15;
+            Debug.Log(jumpForce);
+
+            if (jumpForce <= 0)
+            {
+                isJumping = false;
+                jumpForce = 0;
+            }
+        }
+
+    }
+
+    private void ApplyJumpForce()
+    {
+        if (isJumping)
+        {
+            _rb.AddForce(Vector3.up * jumpForce, ForceMode.Acceleration);
+        }
+    }
+
+    private void ApplyPlayerMovement()
+    {
+        float verticalMovement = verticalInput * _playerSpeed;
+        float horizontalMovement = horizontalInput * _playerSpeed;
+
+        Vector3 movement = new Vector3(horizontalMovement, 0.0f, verticalMovement);
+        movement = Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0) * movement;
+
+        _rb.velocity = movement;
+
+        JumpPhysics();
     }
 
     void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position + Vector3.down * (sphereRadius * 1.51f), sphereRadius);
-    }
-
-    void CheckIfTouchingGround()
-    {
-        // Perform the raycast
-        if (!Physics.CheckSphere(transform.position + Vector3.down * (sphereRadius * 1.51f), sphereRadius, groundLayer))
-        {
-            Debug.Log("Not touching ground");
-            _rb.AddForce(Vector3.down * additionalGravity, ForceMode.Acceleration);
-        }
-    }
-
-    void ApplyPlayerMovement()
-    {
-        float verticalMovement = verticalInput * _playerSpeed;
-        float horizontalMovement = horizontalInput * _playerSpeed;
-
-        Vector3 movement = new Vector3(horizontalMovement, 0.0f, verticalMovement);
-
-        movement = Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0) * movement;
-
-        Vector3 totalVelocity = movement;
-
-        // Apply the calculated velocity
-        _rb.velocity = totalVelocity;
     }
 }
