@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 public class DroneScript : MonoBehaviour
@@ -18,11 +17,8 @@ public class DroneScript : MonoBehaviour
 
     private bool droneStarted = false;
 
-    [Header("Task Variables")]
-    public bool isBusy = false;
-
-    [Header("Script References")]
-    public Interactor interactor;
+    public bool isBusy { get; private set; } = false;
+    public Interactor interactor { get; private set; }
 
     void Start()
     {
@@ -33,15 +29,16 @@ public class DroneScript : MonoBehaviour
     {
         if (droneStarted)
         {
-            if (isBusy) {
+            if (isBusy)
+            {
                 MoveToHomePosition();
-            } else
+            }
+            else
             {
                 UpdateHomePosition();
                 CalculateDesiredVelocity();
                 UpdatePosition();
             }
-
         }
     }
 
@@ -102,15 +99,13 @@ public class DroneScript : MonoBehaviour
 
     private void UpdatePosition()
     {
-        if (isBusy)
-        {
-            float distanceToHome = Vector3.Distance(transform.position, homePosition);
+        float distanceToHome = Vector3.Distance(transform.position, homePosition);
 
-            if (distanceToHome < minDistance)
-            {
-                velocity = Vector3.zero;
-            }
+        if (distanceToHome < minDistance)
+        {
+            velocity = Vector3.zero;
         }
+
         velocity = Vector3.ClampMagnitude(velocity + acceleration * Time.deltaTime, maxSpeed);
         transform.position += velocity * Time.deltaTime;
 
@@ -122,17 +117,14 @@ public class DroneScript : MonoBehaviour
 
     private void MoveToHomePosition()
     {
-        float distanceToHome = Vector3.Distance(transform.position, homePosition);
-        if (distanceToHome < minDistance)
+        if (HasReachedHome())
         {
-            // Reached homePosition, stop moving
             velocity = Vector3.zero;
             isBusy = false;
             return;
         }
 
         Vector3 directionToHome = (homePosition - transform.position).normalized;
-
         Vector3 desiredVelocity = directionToHome * maxSpeed;
         Vector3 avoidance = CalculateAvoidance();
 
@@ -148,7 +140,12 @@ public class DroneScript : MonoBehaviour
         {
             transform.rotation = Quaternion.LookRotation(velocity, Vector3.up);
         }
+    }
 
+    public bool HasReachedHome()
+    {
+        float distanceToHome = Vector3.Distance(transform.position, homePosition);
+        return distanceToHome < minDistance;
     }
 
     public void MoveDroneTo(Vector3 travelPosition)

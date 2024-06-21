@@ -13,8 +13,8 @@ public class MoneyDisplay : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        m_CurrencyText.text = "$: " + PlayerController.instance.moneyAmount.ToString();
-        m_OxygenText.text = "O2: " + PlayerController.instance.OxygenLevel.ToString() + " / " + PlayerController.instance.OxygenMaxLevel.ToString();
+        m_CurrencyText.text = "$: " + PlayerController.instance.playerStatistics.moneyAmount.ToString();
+        m_OxygenText.text = "O2: " + PlayerController.instance.playerDrones.OxygenLevel.ToString() + " / " + PlayerController.instance.playerDrones.OxygenMaxLevel.ToString();
         m_HealthText.text = "HP: 100";
     }
 }

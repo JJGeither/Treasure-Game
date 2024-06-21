@@ -7,7 +7,6 @@ public class InteractorDetector : MonoBehaviour
     private List<Interactee> _interactableObjects = new List<Interactee>();
     public Canvas _canvas;
 
-
     // Update is called once per frame
     void Update()
     {
@@ -17,14 +16,9 @@ public class InteractorDetector : MonoBehaviour
             InteractWithObjects(PlayerController.instance.interactor);
         }
 
-        if (Input.GetKeyDown(KeyCode.Q) && PlayerController.instance.followingDrones.Count > 0)
+        if (Input.GetKeyDown(KeyCode.Q) && PlayerController.instance.playerDrones.followingDrones.Count > 0)
         {
-           
-            InteractWithObjects(PlayerController.instance.followingDrones[0].interactor);
-        }
-
-        if (Input.GetKeyDown(KeyCode.V)) {
-            PlayerController.instance.followingDrones[0].MoveDroneTo(Vector3.zero);
+            InteractWithObjects(PlayerController.instance.playerDrones.followingDrones[0].interactor);
         }
 
         if (_interactableObjects.Count > 0)

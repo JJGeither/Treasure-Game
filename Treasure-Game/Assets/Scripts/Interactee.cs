@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Interactee : MonoBehaviour
@@ -12,43 +10,26 @@ public class Interactee : MonoBehaviour
         DroneStartup
     }
 
+    public InteracteeType interactionType = InteracteeType.Default;
+
     public InteracteeType GetInteractionType()
     {
         return interactionType;
     }
 
-    public InteracteeType interactionType = InteracteeType.Default;
-
     public void Interact(Interactor interactor)
     {
-        if (interactor == null)
+        if (interactor == null || interactor.interactionHandler == null)
         {
             Debug.Log("This object cannot interact");
             return;
         }
 
-        switch (interactionType)
-        {
-            case InteracteeType.Default:
-                interactor.interactionHandler.HandleDefaultInteraction(GetInteracteeTransform());
-                break;
-            case InteracteeType.Pickup:
-                interactor.interactionHandler.HandlePickupInteraction(GetInteracteeTransform());
-                break;
-            case InteracteeType.Dropoff:
-                interactor.interactionHandler.HandleDropoffInteraction(GetInteracteeTransform());
-                break;
-            case InteracteeType.DroneStartup:
-                interactor.interactionHandler.HandleDroneStartupInteraction(GetInteracteeTransform());
-                break;
-            default:
-                Debug.LogWarning("Unhandled interaction type: " + interactionType);
-                break;
-        }
-    }
-    public Transform GetInteracteeTransform()
-    {
-        return this.transform;
+        interactor.interactionHandler.HandleInteraction(this);
     }
 
+    public Transform GetInteracteeTransform()
+    {
+        return transform;
+    }
 }

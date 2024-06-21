@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 public class Interactor : MonoBehaviour
 {
@@ -15,33 +14,14 @@ public class Interactor : MonoBehaviour
         Drone
     }
 
-    public void Interact(Interactee interactee)
-    {
-        var interactionType = interactee.GetInteractionType();
-
-        switch (interactionType)
-        {
-            case Interactee.InteracteeType.Default:
-                interactionHandler.HandleDefaultInteraction(interactee.transform);
-                break;
-            case Interactee.InteracteeType.Pickup:
-                interactionHandler.HandlePickupInteraction(interactee.transform);
-                break;
-            case Interactee.InteracteeType.Dropoff:
-                interactionHandler.HandleDropoffInteraction(interactee.transform);
-                break;
-            case Interactee.InteracteeType.DroneStartup:
-                interactionHandler.HandleDroneStartupInteraction(interactee.transform);
-                break;
-            default:
-                Debug.LogWarning("Unhandled interaction type: " + interactionType);
-                break;
-        }
-    }
-
     private void Start()
     {
         interactionHandler = CreateInteractionHandler();
+    }
+
+    public void Interact(Interactee interactee)
+    {
+        interactionHandler.HandleInteraction(interactee);
     }
 
     private IInteractionHandler CreateInteractionHandler()
@@ -49,12 +29,12 @@ public class Interactor : MonoBehaviour
         switch (interactorType)
         {
             case InteractorType.Player:
-                return new PlayerInteractionHandler(this.transform);
+                return new PlayerInteractionHandler(transform);
             case InteractorType.Drone:
-                return new DroneInteractionHandler(this.transform, this.GetComponent<DroneScript>());
+                return new DroneInteractionHandler(transform, GetComponent<DroneScript>());
             case InteractorType.Default:
             default:
-                return new DefaultInteractionHandler(this.transform);
+                return new DefaultInteractionHandler(transform);
         }
     }
 
@@ -67,22 +47,43 @@ public class Interactor : MonoBehaviour
             this.interactorTransform = interactorTransform;
         }
 
-        public virtual void HandleDefaultInteraction(Transform interactee) { }
-        public virtual void HandlePickupInteraction(Transform interactee) { }
-        public virtual void HandleDropoffInteraction(Transform interactee) { }
-        public virtual void HandleDroneStartupInteraction(Transform interactee) { }
+        public virtual void HandleInteraction(Interactee interactee) { }
     }
 
     public class DefaultInteractionHandler : IInteractionHandler
     {
         public DefaultInteractionHandler(Transform interactorTransform) : base(interactorTransform) { }
 
-        public override void HandleDefaultInteraction(Transform interactee)
+        public override void HandleInteraction(Interactee interactee)
+        {
+            var interactionType = interactee.GetInteractionType();
+
+            switch (interactionType)
+            {
+                case Interactee.InteracteeType.Default:
+                    HandleDefaultInteraction(interactee.transform);
+                    break;
+                case Interactee.InteracteeType.Pickup:
+                    HandlePickupInteraction(interactee.transform);
+                    break;
+                case Interactee.InteracteeType.Dropoff:
+                    HandleDropoffInteraction(interactee.transform);
+                    break;
+                case Interactee.InteracteeType.DroneStartup:
+                    HandleDroneStartupInteraction(interactee.transform);
+                    break;
+                default:
+                    Debug.LogWarning("Unhandled interaction type: " + interactionType);
+                    break;
+            }
+        }
+
+        protected virtual void HandleDefaultInteraction(Transform interactee)
         {
             Debug.Log("Default interaction handled");
         }
 
-        public override void HandlePickupInteraction(Transform interactee)
+        protected virtual void HandlePickupInteraction(Transform interactee)
         {
             interactee.SetParent(interactorTransform);
             var collider = interactee.GetComponent<Collider>();
@@ -95,7 +96,7 @@ public class Interactor : MonoBehaviour
             Debug.Log("Picked up");
         }
 
-        public override void HandleDropoffInteraction(Transform interactee)
+        protected virtual void HandleDropoffInteraction(Transform interactee)
         {
             Debug.Log("Dropped off");
             if (heldObject != null)
@@ -104,17 +105,17 @@ public class Interactor : MonoBehaviour
                 Destroy(heldObject.GetComponent<Interactor>());
                 heldObject.SetParent(interactee.transform);
                 heldObject = null;
-                PlayerController.instance.moneyAmount += 10;
+                PlayerController.instance.playerStatistics.moneyAmount += 10;
             }
         }
 
-        public override void HandleDroneStartupInteraction(Transform interactee)
+        protected virtual void HandleDroneStartupInteraction(Transform interactee)
         {
             var droneScript = interactee.GetComponent<DroneScript>();
             if (droneScript != null)
             {
                 droneScript.DroneStartup();
-                PlayerController.instance.followingDrones.Add(droneScript);
+                PlayerController.instance.playerDrones.followingDrones.Add(droneScript);
             }
             Debug.Log("Drone started up");
         }
@@ -127,55 +128,29 @@ public class Interactor : MonoBehaviour
 
     public class DroneInteractionHandler : DefaultInteractionHandler
     {
-        DroneScript droneScript;
-        public DroneInteractionHandler(Transform interactorTransform, DroneScript droneScript) : base(interactorTransform) { this.droneScript = droneScript;  }
+        private readonly DroneScript droneScript;
 
-        public override void HandleDefaultInteraction(Transform interactee)
+        public DroneInteractionHandler(Transform interactorTransform, DroneScript droneScript) : base(interactorTransform)
         {
-            Debug.Log("Default interaction handled");
+            this.droneScript = droneScript;
         }
 
-        public override void HandlePickupInteraction(Transform interactee)
+        protected override void HandlePickupInteraction(Transform interactee)
         {
             if (droneScript != null)
             {
-                droneScript.MoveDroneTo(interactee.position);
-                HandleDroneReachedHome();
-            }
-
-            interactee.SetParent(interactorTransform);
-            var collider = interactee.GetComponent<Collider>();
-            if (collider != null)
-            {
-                collider.enabled = false;
-            }
-            interactee.localPosition = Vector3.up;
-            heldObject = interactee;
-            Debug.Log("Picked up");
-        }
-
-        public override void HandleDropoffInteraction(Transform interactee)
-        {
-            Debug.Log("Dropped off");
-            if (heldObject != null)
-            {
-                heldObject.localPosition = Vector3.zero;
-                Destroy(heldObject.GetComponent<Interactor>());
-                heldObject.SetParent(interactee.transform);
-                heldObject = null;
-                PlayerController.instance.moneyAmount += 10;
+                MonoBehaviour monoBehavior = interactorTransform.GetComponent<MonoBehaviour>();
+                monoBehavior.StartCoroutine(WaitForDroneToReachHome(interactee));
             }
         }
 
-        public override void HandleDroneStartupInteraction(Transform interactee)
+        private IEnumerator WaitForDroneToReachHome(Transform interactee)
         {
-            var droneScript = interactee.GetComponent<DroneScript>();
-            if (droneScript != null)
-            {
-                droneScript.DroneStartup();
-                PlayerController.instance.followingDrones.Add(droneScript);
-            }
-            Debug.Log("Drone started up");
+            droneScript.MoveDroneTo(interactee.position);
+
+            yield return new WaitUntil(() => !droneScript.isBusy);
+
+            base.HandlePickupInteraction(interactee);
         }
     }
 }
