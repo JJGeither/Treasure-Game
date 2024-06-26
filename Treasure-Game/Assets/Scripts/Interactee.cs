@@ -7,7 +7,10 @@ public class Interactee : MonoBehaviour
         Default,
         Pickup,
         Dropoff,
-        DroneStartup
+        DroneStartup,
+        OxygenShop,
+        MineShop,
+        Ore
     }
 
     public InteracteeType interactionType = InteracteeType.Default;

@@ -8,7 +8,7 @@ public class PlayerDrones : MonoBehaviour
 
     [Header("Oxygen Variables")]
     public float OxygenMaxLevel;
-    public float OxygenLevel { get; private set; }
+    public float OxygenLevel;
 
     void Start()
     {

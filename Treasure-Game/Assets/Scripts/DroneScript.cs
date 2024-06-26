@@ -16,7 +16,6 @@ public class DroneScript : MonoBehaviour
     private Vector3 homePosition;
 
     private bool droneStarted = false;
-
     public bool isBusy { get; private set; } = false;
     public Interactor interactor { get; private set; }
 
@@ -31,13 +30,11 @@ public class DroneScript : MonoBehaviour
         {
             if (isBusy)
             {
-                MoveToHomePosition();
+                MoveToDesiredPosition();
             }
             else
             {
-                UpdateHomePosition();
-                CalculateDesiredVelocity();
-                UpdatePosition();
+                IdleAroundPlayer();
             }
         }
     }
@@ -48,6 +45,51 @@ public class DroneScript : MonoBehaviour
         UpdateHomePosition();
         transform.position = homePosition;
         droneStarted = true;
+    }
+
+    public void MoveDroneTo(Vector3 travelPosition)
+    {
+        isBusy = true;
+        homePosition = travelPosition;
+    }
+
+    private void IdleAroundPlayer()
+    {
+        UpdateHomePosition();
+        CalculateDesiredVelocity();
+        UpdatePosition();
+    }
+
+    private void MoveToDesiredPosition()
+    {
+        if (HasReachedHome())
+        {
+            StopMovement();
+            return;
+        }
+
+        Vector3 directionToHome = (homePosition - transform.position).normalized;
+        Vector3 desiredVelocity = directionToHome * maxSpeed;
+        Vector3 avoidance = CalculateAvoidance();
+
+        desiredVelocity += avoidance * avoidanceWeight;
+        desiredVelocity = Vector3.ClampMagnitude(desiredVelocity, maxSpeed);
+
+        acceleration = desiredVelocity - velocity;
+
+        velocity = Vector3.ClampMagnitude(velocity + acceleration * Time.deltaTime, maxSpeed);
+        transform.position += velocity * Time.deltaTime;
+
+        if (velocity != Vector3.zero)
+        {
+            transform.rotation = Quaternion.LookRotation(velocity, Vector3.up);
+        }
+    }
+
+    private void StopMovement()
+    {
+        velocity = Vector3.zero;
+        isBusy = false;
     }
 
     private void UpdateHomePosition()
@@ -115,42 +157,9 @@ public class DroneScript : MonoBehaviour
         }
     }
 
-    private void MoveToHomePosition()
-    {
-        if (HasReachedHome())
-        {
-            velocity = Vector3.zero;
-            isBusy = false;
-            return;
-        }
-
-        Vector3 directionToHome = (homePosition - transform.position).normalized;
-        Vector3 desiredVelocity = directionToHome * maxSpeed;
-        Vector3 avoidance = CalculateAvoidance();
-
-        desiredVelocity += avoidance * avoidanceWeight;
-        desiredVelocity = Vector3.ClampMagnitude(desiredVelocity, maxSpeed);
-
-        acceleration = desiredVelocity - velocity;
-
-        velocity = Vector3.ClampMagnitude(velocity + acceleration * Time.deltaTime, maxSpeed);
-        transform.position += velocity * Time.deltaTime;
-
-        if (velocity != Vector3.zero)
-        {
-            transform.rotation = Quaternion.LookRotation(velocity, Vector3.up);
-        }
-    }
-
     public bool HasReachedHome()
     {
         float distanceToHome = Vector3.Distance(transform.position, homePosition);
         return distanceToHome < minDistance;
-    }
-
-    public void MoveDroneTo(Vector3 travelPosition)
-    {
-        isBusy = true;
-        homePosition = travelPosition;
     }
 }

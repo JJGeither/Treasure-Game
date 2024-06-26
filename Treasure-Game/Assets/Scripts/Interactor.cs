@@ -11,7 +11,7 @@ public class Interactor : MonoBehaviour
     {
         Default,
         Player,
-        Drone
+        Drone,
     }
 
     private void Start()
@@ -48,6 +48,7 @@ public class Interactor : MonoBehaviour
         }
 
         public virtual void HandleInteraction(Interactee interactee) { }
+
     }
 
     public class DefaultInteractionHandler : IInteractionHandler
@@ -71,6 +72,15 @@ public class Interactor : MonoBehaviour
                     break;
                 case Interactee.InteracteeType.DroneStartup:
                     HandleDroneStartupInteraction(interactee.transform);
+                    break;
+                case Interactee.InteracteeType.OxygenShop:
+                    HandleOxygenShop(interactee.transform);
+                    break;
+                case Interactee.InteracteeType.MineShop:
+                    HandleMineShop(interactee.transform);
+                    break;
+                case Interactee.InteracteeType.Ore:
+                    MineOre(interactee.transform);
                     break;
                 default:
                     Debug.LogWarning("Unhandled interaction type: " + interactionType);
@@ -119,11 +129,43 @@ public class Interactor : MonoBehaviour
             }
             Debug.Log("Drone started up");
         }
+
+        protected virtual void HandleOxygenShop(Transform interactee)
+        {
+            if (PlayerController.instance.playerStatistics.moneyAmount >= 10)
+            {
+                PlayerController.instance.playerStatistics.moneyAmount -= 10;
+                PlayerController.instance.playerDrones.OxygenMaxLevel += 10;
+                PlayerController.instance.playerDrones.OxygenLevel += 10;
+            }
+        }
+
+        protected virtual void HandleMineShop(Transform interactee)
+        {
+            if (PlayerController.instance.playerStatistics.moneyAmount >= 10)
+            {
+                PlayerController.instance.playerStatistics.moneyAmount -= 10;
+                PlayerController.instance.playerStatistics.playerMineLevel += 10;
+            }
+        }
+
+        protected virtual void MineOre(Transform interactee) { }
     }
 
     public class PlayerInteractionHandler : DefaultInteractionHandler
     {
         public PlayerInteractionHandler(Transform interactorTransform) : base(interactorTransform) { }
+
+        protected override void MineOre(Transform interactee)
+        {
+            var oreScript = interactee.GetComponent<OreController>();
+            if (oreScript.mineLevel <= PlayerController.instance.playerStatistics.playerMineLevel)
+            {
+                PlayerController.instance.playerStatistics.moneyAmount += 10;
+                Destroy(interactee.gameObject);
+            }
+
+        }
     }
 
     public class DroneInteractionHandler : DefaultInteractionHandler
@@ -140,17 +182,35 @@ public class Interactor : MonoBehaviour
             if (droneScript != null)
             {
                 MonoBehaviour monoBehavior = interactorTransform.GetComponent<MonoBehaviour>();
-                monoBehavior.StartCoroutine(WaitForDroneToReachHome(interactee));
+                monoBehavior.StartCoroutine(DronePickupWhenReachHome(interactee));
             }
         }
 
-        private IEnumerator WaitForDroneToReachHome(Transform interactee)
+        private IEnumerator DronePickupWhenReachHome(Transform interactee)
         {
             droneScript.MoveDroneTo(interactee.position);
 
             yield return new WaitUntil(() => !droneScript.isBusy);
 
             base.HandlePickupInteraction(interactee);
+        }
+
+        protected override void HandleDropoffInteraction(Transform interactee)
+        {
+            if (droneScript != null)
+            {
+                MonoBehaviour monoBehavior = interactorTransform.GetComponent<MonoBehaviour>();
+                monoBehavior.StartCoroutine(DroneDropoffWhenReachHome(interactee));
+            }
+        }
+
+        private IEnumerator DroneDropoffWhenReachHome(Transform interactee)
+        {
+            droneScript.MoveDroneTo(interactee.position);
+
+            yield return new WaitUntil(() => !droneScript.isBusy);
+
+            base.HandleDropoffInteraction(interactee);
         }
     }
 }
