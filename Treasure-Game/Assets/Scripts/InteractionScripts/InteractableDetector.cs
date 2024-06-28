@@ -13,12 +13,12 @@ public class InteractorDetector : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            InteractWithObjects(PlayerController.instance.interactor);
+            InteractUsingObject(PlayerController.instance.interactor);
         }
 
         if (Input.GetKeyDown(KeyCode.Q) && PlayerController.instance.playerDrones.followingDrones.Count > 0)
         {
-            InteractWithObjects(PlayerController.instance.playerDrones.followingDrones[0].interactor);
+            InteractUsingObject(PlayerController.instance.playerDrones.followingDrones[0].interactor);
         }
 
         if (_interactableObjects.Count > 0)
@@ -31,12 +31,11 @@ public class InteractorDetector : MonoBehaviour
         }
     }
 
-    private void InteractWithObjects(Interactor interactor)
+    private void InteractUsingObject(Interactor interactor)
     {
         if (_interactableObjects.Count > 0)
         {
-            interactor.Interact(_interactableObjects[0]);
-            //_interactableObjects[0].Interact(interactor);
+            interactor.Interact(_interactableObjects[0], 0);
             _interactableObjects.RemoveAt(0);
         }
     }

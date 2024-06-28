@@ -5,7 +5,7 @@ public class Interactor : MonoBehaviour
 {
     public static Transform heldObject;
     public InteractorType interactorType;
-    public IInteractionHandler interactionHandler;
+    private IInteractionHandler interactionHandler;
 
     public enum InteractorType
     {
@@ -19,9 +19,15 @@ public class Interactor : MonoBehaviour
         interactionHandler = CreateInteractionHandler();
     }
 
-    public void Interact(Interactee interactee)
+    public void Interact(Interactee interactee, int action)
     {
-        interactionHandler.HandleInteraction(interactee);
+        if (interactee == null)
+        {
+            Debug.Log("This object cannot interact");
+            return;
+        }
+
+        interactionHandler.HandleInteraction(interactee, action);
     }
 
     private IInteractionHandler CreateInteractionHandler()
@@ -32,7 +38,6 @@ public class Interactor : MonoBehaviour
                 return new PlayerInteractionHandler(transform);
             case InteractorType.Drone:
                 return new DroneInteractionHandler(transform, GetComponent<DroneScript>());
-            case InteractorType.Default:
             default:
                 return new DefaultInteractionHandler(transform);
         }
@@ -47,19 +52,16 @@ public class Interactor : MonoBehaviour
             this.interactorTransform = interactorTransform;
         }
 
-        public virtual void HandleInteraction(Interactee interactee) { }
-
+        public abstract void HandleInteraction(Interactee interactee, int action);
     }
 
     public class DefaultInteractionHandler : IInteractionHandler
     {
         public DefaultInteractionHandler(Transform interactorTransform) : base(interactorTransform) { }
 
-        public override void HandleInteraction(Interactee interactee)
+        public override void HandleInteraction(Interactee interactee, int action)
         {
-            var interactionType = interactee.GetInteractionType();
-
-            switch (interactionType)
+            switch (interactee.GetInteractionType(action))
             {
                 case Interactee.InteracteeType.Default:
                     HandleDefaultInteraction(interactee.transform);
@@ -74,18 +76,34 @@ public class Interactor : MonoBehaviour
                     HandleDroneStartupInteraction(interactee.transform);
                     break;
                 case Interactee.InteracteeType.OxygenShop:
-                    HandleOxygenShop(interactee.transform);
+                    HandleOxygenShopInteraction();
                     break;
                 case Interactee.InteracteeType.MineShop:
-                    HandleMineShop(interactee.transform);
+                    HandleMineShopInteraction();
                     break;
                 case Interactee.InteracteeType.Ore:
-                    MineOre(interactee.transform);
+                    HandleOreInteraction(interactee.transform);
+                    break;
+                case Interactee.InteracteeType.MoveDoor:
+                    HandleDoorOpening(interactee.transform);
+                    break;
+                case Interactee.InteracteeType.MoveDoorBack:
+                    HandleDoorClosing(interactee.transform);
                     break;
                 default:
-                    Debug.LogWarning("Unhandled interaction type: " + interactionType);
+                    Debug.LogWarning("Unhandled interaction type: " + interactee.GetInteractionType(action));
                     break;
             }
+        }
+
+        protected virtual void HandleDoorOpening(Transform interactee)
+        {
+            interactee.position += new Vector3(10,0,0);
+        }
+
+        protected virtual void HandleDoorClosing(Transform interactee)
+        {
+            interactee.position -= new Vector3(10, 0, 0);
         }
 
         protected virtual void HandleDefaultInteraction(Transform interactee)
@@ -95,15 +113,30 @@ public class Interactor : MonoBehaviour
 
         protected virtual void HandlePickupInteraction(Transform interactee)
         {
+            SetInteracteeAsChild(interactee);
+            DisableCollider(interactee);
+            SetHeldObject(interactee);
+            Debug.Log("Picked up");
+        }
+
+        private void SetInteracteeAsChild(Transform interactee)
+        {
             interactee.SetParent(interactorTransform);
+            interactee.localPosition = Vector3.up;
+        }
+
+        private void DisableCollider(Transform interactee)
+        {
             var collider = interactee.GetComponent<Collider>();
             if (collider != null)
             {
                 collider.enabled = false;
             }
-            interactee.localPosition = Vector3.up;
+        }
+
+        private void SetHeldObject(Transform interactee)
+        {
             heldObject = interactee;
-            Debug.Log("Picked up");
         }
 
         protected virtual void HandleDropoffInteraction(Transform interactee)
@@ -111,12 +144,17 @@ public class Interactor : MonoBehaviour
             Debug.Log("Dropped off");
             if (heldObject != null)
             {
-                heldObject.localPosition = Vector3.zero;
+                ResetHeldObjectPosition();
                 Destroy(heldObject.GetComponent<Interactor>());
-                heldObject.SetParent(interactee.transform);
+                heldObject.SetParent(interactee);
                 heldObject = null;
                 PlayerController.instance.playerStatistics.moneyAmount += 10;
             }
+        }
+
+        private void ResetHeldObjectPosition()
+        {
+            heldObject.localPosition = Vector3.zero;
         }
 
         protected virtual void HandleDroneStartupInteraction(Transform interactee)
@@ -130,7 +168,7 @@ public class Interactor : MonoBehaviour
             Debug.Log("Drone started up");
         }
 
-        protected virtual void HandleOxygenShop(Transform interactee)
+        protected virtual void HandleOxygenShopInteraction()
         {
             if (PlayerController.instance.playerStatistics.moneyAmount >= 10)
             {
@@ -140,7 +178,7 @@ public class Interactor : MonoBehaviour
             }
         }
 
-        protected virtual void HandleMineShop(Transform interactee)
+        protected virtual void HandleMineShopInteraction()
         {
             if (PlayerController.instance.playerStatistics.moneyAmount >= 10)
             {
@@ -149,22 +187,21 @@ public class Interactor : MonoBehaviour
             }
         }
 
-        protected virtual void MineOre(Transform interactee) { }
+        protected virtual void HandleOreInteraction(Transform interactee) { }
     }
 
     public class PlayerInteractionHandler : DefaultInteractionHandler
     {
         public PlayerInteractionHandler(Transform interactorTransform) : base(interactorTransform) { }
 
-        protected override void MineOre(Transform interactee)
+        protected override void HandleOreInteraction(Transform interactee)
         {
             var oreScript = interactee.GetComponent<OreController>();
-            if (oreScript.mineLevel <= PlayerController.instance.playerStatistics.playerMineLevel)
+            if (oreScript != null && oreScript.mineLevel <= PlayerController.instance.playerStatistics.playerMineLevel)
             {
                 PlayerController.instance.playerStatistics.moneyAmount += 10;
                 Destroy(interactee.gameObject);
             }
-
         }
     }
 
@@ -181,17 +218,15 @@ public class Interactor : MonoBehaviour
         {
             if (droneScript != null)
             {
-                MonoBehaviour monoBehavior = interactorTransform.GetComponent<MonoBehaviour>();
-                monoBehavior.StartCoroutine(DronePickupWhenReachHome(interactee));
+                MonoBehaviour monoBehaviour = interactorTransform.GetComponent<MonoBehaviour>();
+                monoBehaviour.StartCoroutine(DronePickupWhenReachHome(interactee));
             }
         }
 
         private IEnumerator DronePickupWhenReachHome(Transform interactee)
         {
             droneScript.MoveDroneTo(interactee.position);
-
             yield return new WaitUntil(() => !droneScript.isBusy);
-
             base.HandlePickupInteraction(interactee);
         }
 
@@ -199,17 +234,15 @@ public class Interactor : MonoBehaviour
         {
             if (droneScript != null)
             {
-                MonoBehaviour monoBehavior = interactorTransform.GetComponent<MonoBehaviour>();
-                monoBehavior.StartCoroutine(DroneDropoffWhenReachHome(interactee));
+                MonoBehaviour monoBehaviour = interactorTransform.GetComponent<MonoBehaviour>();
+                monoBehaviour.StartCoroutine(DroneDropoffWhenReachHome(interactee));
             }
         }
 
         private IEnumerator DroneDropoffWhenReachHome(Transform interactee)
         {
             droneScript.MoveDroneTo(interactee.position);
-
             yield return new WaitUntil(() => !droneScript.isBusy);
-
             base.HandleDropoffInteraction(interactee);
         }
     }
