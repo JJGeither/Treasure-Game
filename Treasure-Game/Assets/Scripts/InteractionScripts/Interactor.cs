@@ -81,6 +81,9 @@ public class Interactor : MonoBehaviour
                 case Interactee.InteracteeType.MineShop:
                     HandleMineShopInteraction();
                     break;
+                case Interactee.InteracteeType.DroneShop:
+                    HandleDroneShopInteraction(interactee);
+                    break;
                 case Interactee.InteracteeType.Ore:
                     HandleOreInteraction(interactee.transform);
                     break;
@@ -117,6 +120,12 @@ public class Interactor : MonoBehaviour
             DisableCollider(interactee);
             SetHeldObject(interactee);
             Debug.Log("Picked up");
+        }
+
+        protected virtual void HandleDroneShopInteraction(Interactee interactee)
+        {
+            DroneShop droneShop = interactee.GetComponent<DroneShop>();
+            droneShop.ToggleShop();
         }
 
         private void SetInteracteeAsChild(Transform interactee)

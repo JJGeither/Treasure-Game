@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(DroneStatistics))]
 public class PlayerDrones : MonoBehaviour
 {
     public List<DroneScript> followingDrones { get; private set; } = new List<DroneScript>();

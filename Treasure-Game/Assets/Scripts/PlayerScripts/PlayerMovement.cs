@@ -93,7 +93,7 @@ public class PlayerMovement : MonoBehaviour
                 jumpForce = jumpForce / 2;
 
             // Gradually decrease jumpForce to make it smoother
-            jumpForce -= 15;
+            jumpForce -= 25;
             Debug.Log(jumpForce);
 
             if (jumpForce <= 0)

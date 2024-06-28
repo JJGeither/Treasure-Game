@@ -11,9 +11,10 @@ public class Interactee : MonoBehaviour
         DroneStartup,
         OxygenShop,
         MineShop,
+        DroneShop,
         Ore,
         MoveDoor,
-        MoveDoorBack
+        MoveDoorBack,
     }
 
     //public InteracteeType interactionType = InteracteeType.Default;

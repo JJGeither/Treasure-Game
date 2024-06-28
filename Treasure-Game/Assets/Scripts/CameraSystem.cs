@@ -1,10 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraSystem : MonoBehaviour
 {
     [Header("Public Variables")]
+    [SerializeField] private LayerMask wallLayer;
     [SerializeField] private Transform player;
     [SerializeField] private Vector3 offset = new Vector3(0, 2, -5);
     [SerializeField] private float followSpeed = 10f;
@@ -18,13 +17,17 @@ public class CameraSystem : MonoBehaviour
     private float currentYRotation = 0f;
     private float currentDistance = 5f;
 
+    private RaycastHit hitInfo; // To store the raycast hit information
+
     // Update is called once per frame
     void Update()
     {
+        // Handle camera rotation based on mouse input
         float mouseY = Input.GetAxis("Mouse Y");
         currentYRotation -= mouseY * rotationSpeed * Time.deltaTime;
         currentYRotation = Mathf.Clamp(currentYRotation, minYRotation, maxYRotation);
 
+        // Handle camera zoom based on mouse scrollwheel input
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         currentDistance -= scroll * zoomSpeed;
         currentDistance = Mathf.Clamp(currentDistance, minDistance, maxDistance);
@@ -35,11 +38,22 @@ public class CameraSystem : MonoBehaviour
         // Calculate the new offset based on the zoom distance
         Vector3 zoomOffset = offset.normalized * currentDistance;
 
-        // Smoothly interpolate the camera's position
+        // Calculate the target position of the camera
         Vector3 targetPosition = player.position + rotation * zoomOffset;
+
+        // Perform a raycast from player to targetPosition to check for obstacles
+        // Ignore triggers when performing the raycast
+
+        if (Physics.Raycast(player.position, targetPosition - player.position, out hitInfo, Vector3.Distance(player.position, targetPosition), wallLayer))
+        {
+            // Adjust camera position to avoid clipping
+            targetPosition = hitInfo.point - (targetPosition - player.position).normalized * 0.5f;
+        }
+
+        // Smoothly interpolate the camera's position towards the target position
         transform.position = Vector3.Lerp(transform.position, targetPosition, followSpeed * Time.deltaTime);
 
-        // Look at the player
+        // Make the camera look at the player's position
         transform.LookAt(player.position);
     }
 }

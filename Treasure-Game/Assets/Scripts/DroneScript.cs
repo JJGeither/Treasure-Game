@@ -1,7 +1,10 @@
 using UnityEngine;
 
+[RequireComponent(typeof(DroneStatistics))]
 public class DroneScript : MonoBehaviour
 {
+    public string droneName;
+
     [Header("Boid Variables")]
     public float followHomeWeight = 1.0f;
     public float maxSpeed = 15.0f;
@@ -19,8 +22,11 @@ public class DroneScript : MonoBehaviour
     public bool isBusy { get; private set; } = false;
     public Interactor interactor { get; private set; }
 
+    public DroneStatistics droneStatistics;
+
     void Start()
     {
+        droneStatistics = this.GetComponent<DroneStatistics>();
         interactor = GetComponent<Interactor>();
     }
 
@@ -41,11 +47,14 @@ public class DroneScript : MonoBehaviour
 
     public void DroneStartup()
     {
+        droneStatistics.SetRandomDroneName();
         Destroy(GetComponent<Interactee>());
         UpdateHomePosition();
         transform.position = homePosition;
         droneStarted = true;
     }
+
+    public string GetDroneName() { return droneStatistics.droneName;  }
 
     public void MoveDroneTo(Vector3 travelPosition)
     {
