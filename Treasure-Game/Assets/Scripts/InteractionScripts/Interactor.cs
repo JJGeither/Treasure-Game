@@ -37,7 +37,7 @@ public class Interactor : MonoBehaviour
             case InteractorType.Player:
                 return new PlayerInteractionHandler(transform);
             case InteractorType.Drone:
-                return new DroneInteractionHandler(transform, GetComponent<DroneScript>());
+                return new DroneInteractionHandler(transform, GetComponent<DroneController>());
             default:
                 return new DefaultInteractionHandler(transform);
         }
@@ -168,11 +168,10 @@ public class Interactor : MonoBehaviour
 
         protected virtual void HandleDroneStartupInteraction(Transform interactee)
         {
-            var droneScript = interactee.GetComponent<DroneScript>();
-            if (droneScript != null)
+            var droneController = interactee.GetComponent<DroneController>();
+            if (droneController != null)
             {
-                droneScript.DroneStartup();
-                PlayerController.instance.playerDrones.followingDrones.Add(droneScript);
+                droneController.stateMachine.Activate();
             }
             Debug.Log("Drone started up");
         }
@@ -205,44 +204,84 @@ public class Interactor : MonoBehaviour
 
         protected override void HandleOreInteraction(Transform interactee)
         {
+            MonoBehaviour monoBehaviour = interactorTransform.GetComponent<MonoBehaviour>();
+            OreController oreController = interactee.GetComponent<OreController>();
+            int mineLevel = oreController.mineLevel;
+            monoBehaviour.StartCoroutine(MineOre(interactee.transform));
+        }
+
+        private IEnumerator MineOre(Transform interactee)
+        {
             var oreScript = interactee.GetComponent<OreController>();
-            if (oreScript != null && oreScript.mineLevel <= PlayerController.instance.playerStatistics.playerMineLevel)
+            if (oreScript != null && oreScript.oreDurability <= PlayerController.instance.playerStatistics.playerMineLevel)
             {
-                PlayerController.instance.playerStatistics.moneyAmount += 10;
-                Destroy(interactee.gameObject);
+                while (oreScript.oreDurability > 0)
+                {
+                    Debug.Log(oreScript.oreDurability);
+                    oreScript.oreDurability -= 5;
+                    PlayerController.instance.playerStatistics.moneyAmount += 10;
+                    yield return new WaitForSeconds(1f); // Wait for 1 second before the next level decrease
+                }
+                Destroy(interactee.gameObject); // Destroy the ore once mine level reaches 0
             }
         }
     }
 
     public class DroneInteractionHandler : DefaultInteractionHandler
     {
-        private readonly DroneScript droneScript;
+        private readonly DroneController droneController;
 
-        public DroneInteractionHandler(Transform interactorTransform, DroneScript droneScript) : base(interactorTransform)
+        public DroneInteractionHandler(Transform interactorTransform, DroneController droneScript) : base(interactorTransform)
         {
-            this.droneScript = droneScript;
+            this.droneController = droneScript;
+        }
+
+        protected override void HandleOreInteraction(Transform interactee)
+        {
+            MonoBehaviour monoBehaviour = interactorTransform.GetComponent<MonoBehaviour>();
+            droneController.stateMachine.TransitionTo(new DroneStats.MiningState(droneController, interactee.position));
+            monoBehaviour.StartCoroutine(MineOre(interactee.transform, droneController.stateMachine));
+        }
+
+        private IEnumerator MineOre(Transform interactee, DroneStats.DroneStateMachine stateMachine)
+        {
+            droneController.SetDestination(interactee.position);
+            var oreScript = interactee.GetComponent<OreController>();
+            if (oreScript != null && oreScript.oreDurability <= PlayerController.instance.playerStatistics.playerMineLevel)
+            {
+                while (oreScript.oreDurability > 0)
+                {
+                    Debug.Log(oreScript.oreDurability);
+                    oreScript.oreDurability -= 10;
+                    PlayerController.instance.playerStatistics.moneyAmount += 10;
+                    yield return new WaitForSeconds(1f); // Wait for 1 second before the next level decrease
+                }
+                Destroy(interactee.gameObject); // Destroy the ore once mine level reaches 0
+                stateMachine.TransitionToIdle();
+            }
         }
 
         protected override void HandlePickupInteraction(Transform interactee)
         {
-            if (droneScript != null)
+            if (droneController != null)
             {
+                droneController.stateMachine.TransitionTo(new DroneStats.MovementState(droneController, interactee.position));
                 MonoBehaviour monoBehaviour = interactorTransform.GetComponent<MonoBehaviour>();
                 monoBehaviour.StartCoroutine(DronePickupWhenReachHome(interactee));
             }
         }
 
         private IEnumerator DronePickupWhenReachHome(Transform interactee)
-        {
-            droneScript.MoveDroneTo(interactee.position);
-            yield return new WaitUntil(() => !droneScript.isBusy);
+        {;
+            yield return new WaitUntil(() => !droneController.stateMachine.IsBusy());
             base.HandlePickupInteraction(interactee);
         }
 
         protected override void HandleDropoffInteraction(Transform interactee)
         {
-            if (droneScript != null)
+            if (droneController != null)
             {
+                droneController.stateMachine.TransitionTo(new DroneStats.MovementState(droneController, interactee.position));
                 MonoBehaviour monoBehaviour = interactorTransform.GetComponent<MonoBehaviour>();
                 monoBehaviour.StartCoroutine(DroneDropoffWhenReachHome(interactee));
             }
@@ -250,8 +289,7 @@ public class Interactor : MonoBehaviour
 
         private IEnumerator DroneDropoffWhenReachHome(Transform interactee)
         {
-            droneScript.MoveDroneTo(interactee.position);
-            yield return new WaitUntil(() => !droneScript.isBusy);
+            yield return new WaitUntil(() => !droneController.stateMachine.IsBusy());
             base.HandleDropoffInteraction(interactee);
         }
     }

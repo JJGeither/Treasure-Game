@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(DroneStatistics))]
+[RequireComponent(typeof(DroneStats))]
 public class PlayerDrones : MonoBehaviour
 {
-    public List<DroneScript> followingDrones { get; private set; } = new List<DroneScript>();
+    public List<DroneController> followingDrones { get; private set; } = new List<DroneController>();
 
     [Header("Oxygen Variables")]
     public float OxygenMaxLevel;
