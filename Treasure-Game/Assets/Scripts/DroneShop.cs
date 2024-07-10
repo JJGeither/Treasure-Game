@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -10,6 +9,7 @@ public class DroneShop : MonoBehaviour
     public Canvas droneUpgradeScreen;
     public TMP_Dropdown droneDropdown;
 
+    public List<Button> buttonList;
     public Button miningSpeedButton;
 
     void Start()

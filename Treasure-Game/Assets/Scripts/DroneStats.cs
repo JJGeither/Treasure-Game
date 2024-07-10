@@ -1,10 +1,14 @@
+using System.Collections;
 using UnityEngine;
 
 public class DroneStats : MonoBehaviour
 {
     public string DroneName { get; private set; }
     public int MiningSpeed = 50;
-
+    private void Start()
+    {
+        GenerateRandomName();
+    }
     public void GenerateRandomName()
     {
         int randomNumber = Random.Range(1, 100);
@@ -12,6 +16,8 @@ public class DroneStats : MonoBehaviour
         Debug.Log($"Assigned Drone Name: {DroneName}");
     }
 
+    // Determines what actions the drone will take
+    // Does not handle actual interactions, bu
     public class DroneStateMachine
     {
         private DroneState currentState;
@@ -104,12 +110,24 @@ public class DroneStats : MonoBehaviour
         public override bool IsBusy() => true;
     }
 
+    public class LookAtObject : DroneState
+    {
+        Vector3 lookAtPosition;
+        public LookAtObject(DroneController drone, Vector3 lookAtPosition) : base(drone) { this.lookAtPosition = lookAtPosition; }
+        public override void Execute()
+        {
+            drone.transform.LookAt(lookAtPosition);
+        }
+
+        public override bool IsBusy() => false;
+    }
+
 
     public class MiningState : DroneState
     {
         public MiningState(DroneController drone, Vector3 destination) : base(drone)
         {
-            drone.SetDestination(destination);
+            drone.SetDestination(destination + Vector3.up * 3);
         }
 
         public override void Execute()
@@ -118,6 +136,7 @@ public class DroneStats : MonoBehaviour
         }
 
         public override bool IsBusy() => true;
+
     }
 }
 

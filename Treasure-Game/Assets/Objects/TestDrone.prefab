@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 6341746346551170647}
   - component: {fileID: 4674855018625473929}
   - component: {fileID: 3608287071916179202}
+  - component: {fileID: 3565387344580589959}
   m_Layer: 0
   m_Name: TestDrone
   m_TagString: Untagged
@@ -121,15 +122,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05706559154d95c4baf643d20b7f1a38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  droneName: 
-  followHomeWeight: 999
   maxSpeed: 15
-  followHomeRadius: 1
-  circleRadius: 5
   minDistance: 2
+  circleRadius: 5
   avoidanceRadius: 3
   avoidanceWeight: 1
-  droneStatistics: {fileID: 0}
 --- !u!114 &6341746346551170647
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -168,5 +165,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76b4dd1e84e597746abda3abb620dff0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  droneName: 
-  miningSpeed: 50
+  MiningSpeed: 50
+--- !u!114 &3565387344580589959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5363332759500879234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 732dd4fb6d8798c48bb30a9fe847b5e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dronePlatformPrefab: {fileID: 8249167254312976861, guid: a14056225e8f45744b76cccf94bf458c, type: 3}
+  bulletPrefab: {fileID: 4610348762466319483, guid: 7bbf568268cf6c7449e3fd2debd5a350, type: 3}

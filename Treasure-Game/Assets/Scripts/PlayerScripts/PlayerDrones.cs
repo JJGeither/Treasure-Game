@@ -17,6 +17,14 @@ public class PlayerDrones : MonoBehaviour
         StartCoroutine(DecreaseOxygenLevel());
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.F) && followingDrones.Count > 0)
+        {
+            followingDrones[0].abilities.PerformAction();
+        }
+    }
+
     private IEnumerator DecreaseOxygenLevel()
     {
         while (OxygenLevel > 0)

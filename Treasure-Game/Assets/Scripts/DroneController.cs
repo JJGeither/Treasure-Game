@@ -16,8 +16,9 @@ public class DroneController : MonoBehaviour
     private Vector3 acceleration;
     private Vector3 homePosition;
     public Interactor interactor { get; private set; }
+    public DroneAbilities abilities { get; private set; }
 
-    public DroneStats droneStats;
+    public DroneStats droneStats { get; private set; }
     public DroneStats.DroneStateMachine stateMachine { get; private set; }
 
     void Start()
@@ -25,6 +26,7 @@ public class DroneController : MonoBehaviour
         droneStats = GetComponent<DroneStats>();
         stateMachine = new DroneStats.DroneStateMachine(this);
         interactor = GetComponent<Interactor>();
+        abilities = GetComponent<DroneAbilities>();
     }
 
     void Update()
@@ -33,6 +35,8 @@ public class DroneController : MonoBehaviour
         {
             stateMachine.ExecuteCurrentState();
         }
+
+
     }
 
     public void Initialize()
@@ -57,6 +61,7 @@ public class DroneController : MonoBehaviour
         UpdatePosition();
     }
 
+    // Moves to destination and idles once position is reached
     public void MoveToDestination()
     {
         if (HasReachedDestination())
@@ -78,6 +83,7 @@ public class DroneController : MonoBehaviour
         UpdatePosition();
     }
 
+    // Moves to destination and stays there until told to transition into other sate by other code
     public void MoveAndPauseAtDestination()
     {
         if (HasReachedDestination())
