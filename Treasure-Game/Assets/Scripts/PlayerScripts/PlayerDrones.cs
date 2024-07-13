@@ -6,6 +6,7 @@ using UnityEngine;
 public class PlayerDrones : MonoBehaviour
 {
     public List<DroneController> followingDrones { get; private set; } = new List<DroneController>();
+    public int DroneSelectionIndex = 0;
 
     [Header("Oxygen Variables")]
     public float OxygenMaxLevel;
@@ -21,8 +22,29 @@ public class PlayerDrones : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F) && followingDrones.Count > 0)
         {
-            foreach (DroneController drone in followingDrones) { drone.abilities.PerformAction(); }
+            followingDrones[DroneSelectionIndex].abilities.PerformAction();
         }
+
+        CycleThroughDrone();
+    }
+
+    private void CycleThroughDrone()
+    {
+        int maxIndex = followingDrones.Count - 1;
+
+        maxIndex = Mathf.Max(maxIndex, 0);
+
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            DroneSelectionIndex = (DroneSelectionIndex + 1) % (maxIndex + 1);
+            Debug.Log("Current DroneSelectionIndex: " + DroneSelectionIndex);
+        }
+        else if (Input.GetKeyDown(KeyCode.K))
+        {
+            DroneSelectionIndex = (DroneSelectionIndex - 1 + (maxIndex + 1)) % (maxIndex + 1);
+            Debug.Log("Current DroneSelectionIndex: " + DroneSelectionIndex);
+        }
+
     }
 
     private IEnumerator DecreaseOxygenLevel()

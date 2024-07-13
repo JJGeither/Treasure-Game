@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
-using System.Xml.Serialization;
 using UnityEngine;
 
 public class DroneAbilities : MonoBehaviour
@@ -8,49 +6,69 @@ public class DroneAbilities : MonoBehaviour
     public GameObject dronePlatformPrefab;
     public GameObject bulletPrefab;
     public Transform targetTransform;
-    private IDroneAbilityManager droneAbilityManager;
+
+    private DroneAbilityManager abilityManager;
     private DroneController droneController;
 
-    void Start()
+    private void Start()
     {
-        droneController = this.GetComponent<DroneController>();
-        droneAbilityManager = new NoAbility();
-        //droneAbilityManager = new MakePlatform(dronePlatformPrefab, PlayerController.instance.GetComponent<Transform>());
-        //droneAbilityManager = new Shoot(bulletPrefab, droneController, targetTransform);
+        droneController = GetComponent<DroneController>();
+        abilityManager = new NoAbility();
     }
 
-    public void SetAbility(IDroneAbilityManager ability)
+    public void SetAbility(DroneAbilityManager ability)
     {
-        droneAbilityManager = ability;
+        abilityManager = ability;
     }
 
     public void SetAbilityShoot()
     {
-        droneAbilityManager = new Shoot(bulletPrefab, droneController, targetTransform);
+        abilityManager = new Shoot(bulletPrefab, droneController, targetTransform);
     }
 
     public void SetAbilityPlatform()
     {
-        droneAbilityManager = new MakePlatform(dronePlatformPrefab, PlayerController.instance.GetComponent<Transform>());
+        abilityManager = new MakePlatform(dronePlatformPrefab, PlayerController.instance.transform);
     }
 
     public void PerformAction()
     {
-        droneAbilityManager.PerformAction();
+        if (!abilityManager.isOnCooldown)
+        {
+            abilityManager.PerformAction();
+            StartCoroutine(StartCooldown(abilityManager));
+        }
     }
 
-    public interface IDroneAbilityManager
+    private IEnumerator StartCooldown(DroneAbilityManager manager)
     {
-        void PerformAction();
+        manager.isOnCooldown = true;
+        yield return new WaitForSeconds(manager.cooldownDuration);
+        manager.isOnCooldown = false;
     }
 
-    public class NoAbility : IDroneAbilityManager
+    public abstract class DroneAbilityManager
     {
-        public NoAbility() { }
-        public void PerformAction() { }
+        public abstract void PerformAction();
+
+        public float cooldownDuration = 0f;
+        public bool isOnCooldown = false;
     }
 
-    public class MakePlatform : IDroneAbilityManager
+    public class NoAbility : DroneAbilityManager
+    {
+        public NoAbility()
+        {
+            cooldownDuration = 0f;
+        }
+
+        public override void PerformAction()
+        {
+            // No action for no ability
+        }
+    }
+
+    public class MakePlatform : DroneAbilityManager
     {
         private GameObject platformPrefab;
         private Transform parentTransform;
@@ -59,15 +77,16 @@ public class DroneAbilities : MonoBehaviour
         {
             platformPrefab = prefab;
             parentTransform = parent;
+            cooldownDuration = 3f;
         }
 
-        public void PerformAction()
+        public override void PerformAction()
         {
             Instantiate(platformPrefab, parentTransform.position + Vector3.down * 2, parentTransform.rotation);
         }
     }
 
-    public class Shoot : IDroneAbilityManager
+    public class Shoot : DroneAbilityManager
     {
         private GameObject bulletPrefab;
         private Transform parentTransform;
@@ -75,37 +94,30 @@ public class DroneAbilities : MonoBehaviour
         private DroneController droneController;
         private Coroutine resetStateCoroutine;
 
-        public Shoot(GameObject prefab, DroneController droneController, Transform target)
+        public Shoot(GameObject prefab, DroneController controller, Transform target)
         {
             bulletPrefab = prefab;
-            parentTransform = droneController.GetComponent<Transform>();
+            droneController = controller;
+            parentTransform = controller.transform;
             this.target = target;
-            this.droneController = droneController;
+            cooldownDuration = 0f;
         }
 
-        public void PerformAction()
+        public override void PerformAction()
         {
-            // Transition to LookAtObject state
             droneController.stateMachine.TransitionTo(new DroneStats.LookAtObject(droneController, target.position));
 
-            // Cancel any existing reset coroutine
             if (resetStateCoroutine != null)
             {
                 droneController.StopCoroutine(resetStateCoroutine);
             }
 
-            // Start a new reset coroutine
             resetStateCoroutine = droneController.StartCoroutine(ResetStateAfterDelay());
 
             Vector3 spawnPosition = parentTransform.position + parentTransform.forward * 2f;
-
-            // Instantiate the bullet at the parent transform's position and rotation
-            GameObject bullet = GameObject.Instantiate(bulletPrefab, spawnPosition, parentTransform.rotation);
-
-            // Get the Rigidbody component of the bullet
+            GameObject bullet = Instantiate(bulletPrefab, spawnPosition, parentTransform.rotation);
             Rigidbody bulletRigidbody = bullet.GetComponent<Rigidbody>();
 
-            // If the bullet has a Rigidbody, add a forward force to it
             if (bulletRigidbody != null)
             {
                 bulletRigidbody.AddForce(parentTransform.forward * 50f, ForceMode.Impulse);
@@ -114,20 +126,16 @@ public class DroneAbilities : MonoBehaviour
 
         private IEnumerator ResetStateAfterDelay()
         {
-            // Wait for 2 seconds
-            yield return new WaitForSeconds(.55f);
-
-            // Transition to Idle state
+            yield return new WaitForSeconds(0.55f);
             droneController.stateMachine.TransitionToIdle();
         }
     }
 
-
     public void TriggerAbility()
     {
-        if (droneAbilityManager != null)
+        if (abilityManager != null)
         {
-            droneAbilityManager.PerformAction();
+            abilityManager.PerformAction();
         }
     }
 }
