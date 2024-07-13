@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class DroneStats : MonoBehaviour
 {
@@ -116,10 +117,13 @@ public class DroneStats : MonoBehaviour
         public LookAtObject(DroneController drone, Vector3 lookAtPosition) : base(drone) { this.lookAtPosition = lookAtPosition; }
         public override void Execute()
         {
-            drone.transform.LookAt(lookAtPosition);
+
+            var lookPos = lookAtPosition - drone.transform.position;
+            var rotation = Quaternion.LookRotation(lookPos);
+            drone.transform.rotation = Quaternion.Slerp(drone.transform.rotation, rotation, Time.deltaTime * 20f);
         }
 
-        public override bool IsBusy() => false;
+        public override bool IsBusy() => true;
     }
 
 

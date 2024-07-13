@@ -3,6 +3,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static DroneAbilities;
 
 public class DroneShop : MonoBehaviour
 {
@@ -11,11 +12,27 @@ public class DroneShop : MonoBehaviour
 
     public List<Button> buttonList;
     public Button miningSpeedButton;
+    public Button shootUpgrade;
+    public Button platformUpgrade;
 
     void Start()
     {
         droneUpgradeScreen.enabled = false;
         miningSpeedButton.onClick.AddListener(IncreaseMiningSpeed);
+    }
+
+    public void SetAbilityToShoot()
+    {
+        DroneController selectedDrone = PlayerController.instance.playerDrones.followingDrones
+                   .FirstOrDefault(drone => drone.GetDroneName() == GetSelectedDrone());
+        selectedDrone.abilities.SetAbilityShoot();
+    }
+
+    public void SetAbilityToPlatform()
+    {
+        DroneController selectedDrone = PlayerController.instance.playerDrones.followingDrones
+            .FirstOrDefault(drone => drone.GetDroneName() == GetSelectedDrone());
+        selectedDrone.abilities.SetAbilityPlatform();
     }
 
     public void ToggleShop()

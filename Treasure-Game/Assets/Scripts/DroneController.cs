@@ -35,8 +35,6 @@ public class DroneController : MonoBehaviour
         {
             stateMachine.ExecuteCurrentState();
         }
-
-
     }
 
     public void Initialize()

@@ -21,7 +21,7 @@ public class PlayerDrones : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F) && followingDrones.Count > 0)
         {
-            followingDrones[0].abilities.PerformAction();
+            foreach (DroneController drone in followingDrones) { drone.abilities.PerformAction(); }
         }
     }
 

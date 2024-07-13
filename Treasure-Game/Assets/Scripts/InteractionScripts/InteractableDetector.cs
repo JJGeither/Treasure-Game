@@ -40,6 +40,15 @@ public class InteractorDetector : MonoBehaviour
         }
     }
 
+    private void InteractUsingObject(List<Interactor> interactorList)
+    {
+        foreach (Interactor interactor in interactorList)
+        {
+            interactor.Interact(_interactableObjects[0], 0);
+            _interactableObjects.RemoveAt(0);
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
 

@@ -1,18 +1,37 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml.Serialization;
 using UnityEngine;
 
 public class DroneAbilities : MonoBehaviour
 {
     public GameObject dronePlatformPrefab;
     public GameObject bulletPrefab;
+    public Transform targetTransform;
     private IDroneAbilityManager droneAbilityManager;
+    private DroneController droneController;
 
     void Start()
     {
-        //droneAbilityManager = new NoAbility();
+        droneController = this.GetComponent<DroneController>();
+        droneAbilityManager = new NoAbility();
         //droneAbilityManager = new MakePlatform(dronePlatformPrefab, PlayerController.instance.GetComponent<Transform>());
-        droneAbilityManager = new Shoot(bulletPrefab, this.transform);
+        //droneAbilityManager = new Shoot(bulletPrefab, droneController, targetTransform);
+    }
+
+    public void SetAbility(IDroneAbilityManager ability)
+    {
+        droneAbilityManager = ability;
+    }
+
+    public void SetAbilityShoot()
+    {
+        droneAbilityManager = new Shoot(bulletPrefab, droneController, targetTransform);
+    }
+
+    public void SetAbilityPlatform()
+    {
+        droneAbilityManager = new MakePlatform(dronePlatformPrefab, PlayerController.instance.GetComponent<Transform>());
     }
 
     public void PerformAction()
@@ -52,14 +71,32 @@ public class DroneAbilities : MonoBehaviour
     {
         private GameObject bulletPrefab;
         private Transform parentTransform;
-        public Shoot(GameObject prefab, Transform parent)
+        private Transform target;
+        private DroneController droneController;
+        private Coroutine resetStateCoroutine;
+
+        public Shoot(GameObject prefab, DroneController droneController, Transform target)
         {
             bulletPrefab = prefab;
-            parentTransform = parent;
+            parentTransform = droneController.GetComponent<Transform>();
+            this.target = target;
+            this.droneController = droneController;
         }
 
         public void PerformAction()
         {
+            // Transition to LookAtObject state
+            droneController.stateMachine.TransitionTo(new DroneStats.LookAtObject(droneController, target.position));
+
+            // Cancel any existing reset coroutine
+            if (resetStateCoroutine != null)
+            {
+                droneController.StopCoroutine(resetStateCoroutine);
+            }
+
+            // Start a new reset coroutine
+            resetStateCoroutine = droneController.StartCoroutine(ResetStateAfterDelay());
+
             Vector3 spawnPosition = parentTransform.position + parentTransform.forward * 2f;
 
             // Instantiate the bullet at the parent transform's position and rotation
@@ -75,6 +112,14 @@ public class DroneAbilities : MonoBehaviour
             }
         }
 
+        private IEnumerator ResetStateAfterDelay()
+        {
+            // Wait for 2 seconds
+            yield return new WaitForSeconds(.55f);
+
+            // Transition to Idle state
+            droneController.stateMachine.TransitionToIdle();
+        }
     }
 
 
