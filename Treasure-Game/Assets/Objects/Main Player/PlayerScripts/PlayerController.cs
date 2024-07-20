@@ -11,6 +11,9 @@ public class PlayerController : MonoBehaviour
     public PlayerStatistics playerStatistics { get; private set; }
     public Interactor interactor { get; private set; }
 
+    public GameObject gameReticle; 
+    public ReticleController reticleController { get; private set; }
+
     void Awake() => instance = this;
 
     void Start()
@@ -21,5 +24,6 @@ public class PlayerController : MonoBehaviour
         playerMovement = GetComponent<PlayerMovement>();
         playerStatistics = GetComponent<PlayerStatistics>();
         interactor = GetComponent<Interactor>();
+        reticleController = gameReticle.GetComponent<ReticleController>();
     }
 }

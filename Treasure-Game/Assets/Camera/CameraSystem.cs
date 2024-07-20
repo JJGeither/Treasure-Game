@@ -14,7 +14,7 @@ public class CameraSystem : MonoBehaviour
     [SerializeField] private float maxDistance = 40f; // Maximum distance from player
     [SerializeField] private float zoomSpeed = 5f;
 
-    private float currentYRotation = 0f;
+    public float currentYRotation = 0f;
     private float currentDistance = 5f;
 
     private RaycastHit hitInfo; // To store the raycast hit information

@@ -73,10 +73,10 @@ public class DroneShop : MonoBehaviour
 
     string GetSelectedDrone()
     {
-        int selectedIndex = droneDropdown.value; // Get the index of the selected option
+        int selectedIndex = droneDropdown.value;
         if (selectedIndex >= 0 && selectedIndex < droneDropdown.options.Count)
         {
-            return droneDropdown.options[selectedIndex].text; // Return the text of the selected option
+            return droneDropdown.options[selectedIndex].text;
         }
         return null;
     }

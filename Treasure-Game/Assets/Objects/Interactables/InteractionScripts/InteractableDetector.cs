@@ -4,19 +4,26 @@ using UnityEngine;
 
 public class InteractorDetector : MonoBehaviour
 {
+    public enum InteractorType
+    {
+        Player,
+        Drone
+    }
+
     private List<Interactee> _interactableObjects = new List<Interactee>();
+    public InteractorType interactorType;
     public Canvas _canvas;
 
     // Update is called once per frame
     void Update()
     {
 
-        if (Input.GetKeyDown(KeyCode.R))
+        if (interactorType == InteractorType.Player && Input.GetKeyDown(KeyCode.R))
         {
             InteractUsingObject(PlayerController.instance.interactor);
         }
 
-        if (Input.GetKeyDown(KeyCode.Q) && PlayerController.instance.playerDrones.followingDrones.Count > 0)
+        if (interactorType == InteractorType.Drone && Input.GetKeyDown(KeyCode.Q) && PlayerController.instance.playerDrones.followingDrones.Count > 0)
         {
             InteractUsingObject(PlayerController.instance.playerDrones.followingDrones[0].interactor);
         }
