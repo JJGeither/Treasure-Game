@@ -13,11 +13,11 @@ public class InteractorDetector : MonoBehaviour
     private List<Interactee> _interactableObjects = new List<Interactee>();
     public InteractorType interactorType;
     public Canvas _canvas;
+    public Color gizmoColor = Color.green;
+    public float gizmoRadius = 1.0f;
 
-    // Update is called once per frame
     void Update()
     {
-
         if (interactorType == InteractorType.Player && Input.GetKeyDown(KeyCode.R))
         {
             InteractUsingObject(PlayerController.instance.interactor);
@@ -32,7 +32,8 @@ public class InteractorDetector : MonoBehaviour
         {
             _canvas.enabled = true;
             _canvas.transform.position = _interactableObjects[0].transform.position;
-        } else
+        }
+        else
         {
             _canvas.enabled = false;
         }
@@ -47,20 +48,9 @@ public class InteractorDetector : MonoBehaviour
         }
     }
 
-    private void InteractUsingObject(List<Interactor> interactorList)
-    {
-        foreach (Interactor interactor in interactorList)
-        {
-            interactor.Interact(_interactableObjects[0], 0);
-            _interactableObjects.RemoveAt(0);
-        }
-    }
-
     private void OnTriggerEnter(Collider other)
     {
-
         var interactable = other.GetComponent<Interactee>();
-
         if (interactable != null)
         {
             Debug.Log("Enter");
@@ -70,12 +60,16 @@ public class InteractorDetector : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-
         var interactable = other.GetComponent<Interactee>();
-
         if (_interactableObjects.Contains(interactable))
         {
             _interactableObjects.Remove(interactable);
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = gizmoColor;
+        Gizmos.DrawWireSphere(transform.position, gizmoRadius);
     }
 }

@@ -82,7 +82,7 @@ public class DroneShop : MonoBehaviour
     }
     private void OnTriggerExit(Collider other)
     {
-        if (droneUpgradeScreen.enabled)
+        if (other.gameObject.layer != LayerMask.NameToLayer("Ignore Raycast") && droneUpgradeScreen.enabled)
         {
             droneUpgradeScreen.enabled = false;
             Cursor.lockState = CursorLockMode.Locked;

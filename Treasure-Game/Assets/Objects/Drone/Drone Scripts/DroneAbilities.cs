@@ -23,7 +23,7 @@ public class DroneAbilities : MonoBehaviour
 
     public void SetAbilityShoot()
     {
-        abilityManager = new Shoot(bulletPrefab, droneController, PlayerController.instance.reticleController.transform);
+        abilityManager = new Shoot(bulletPrefab, droneController, PlayerController.instance.gameReticle.transform);
     }
 
     public void SetAbilityPlatform()

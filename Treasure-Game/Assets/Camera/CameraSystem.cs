@@ -10,9 +10,10 @@ public class CameraSystem : MonoBehaviour
     [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private float minYRotation = -40f; // Minimum angle for camera rotation
     [SerializeField] private float maxYRotation = 20f; // Maximum angle for camera rotation
-    [SerializeField] private float minDistance = 2f; // Minimum distance from player
+    [SerializeField] private float minDistance = 10f; // Minimum distance from player
     [SerializeField] private float maxDistance = 40f; // Maximum distance from player
     [SerializeField] private float zoomSpeed = 5f;
+    [SerializeField] private float playerHeightOffset = 2f;
 
     public float currentYRotation = 0f;
     private float currentDistance = 5f;
@@ -54,6 +55,6 @@ public class CameraSystem : MonoBehaviour
         transform.position = Vector3.Lerp(transform.position, targetPosition, followSpeed * Time.deltaTime);
 
         // Make the camera look at the player's position
-        transform.LookAt(player.position);
+        transform.LookAt(player.position + Vector3.up * playerHeightOffset);
     }
 }
