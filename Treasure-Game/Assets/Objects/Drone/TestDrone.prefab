@@ -180,3 +180,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dronePlatformPrefab: {fileID: 8249167254312976861, guid: a14056225e8f45744b76cccf94bf458c, type: 3}
   bulletPrefab: {fileID: 4610348762466319483, guid: 7bbf568268cf6c7449e3fd2debd5a350, type: 3}
+  targetTransform: {fileID: 0}

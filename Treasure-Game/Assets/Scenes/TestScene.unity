@@ -712,8 +712,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraSystem: {fileID: 963194227}
   rayDistance: 200
-  crosshairSprite: {fileID: 0}
-  redCrosshairSprite: {fileID: 0}
   layersToIgnore:
     serializedVersion: 2
     m_Bits: 0

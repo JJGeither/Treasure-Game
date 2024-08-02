@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class InteractorDetector : MonoBehaviour
@@ -45,6 +46,10 @@ public class InteractorDetector : MonoBehaviour
         {
             interactor.Interact(_interactableObjects[0], 0);
             _interactableObjects.RemoveAt(0);
+        } else if (interactorType == InteractorType.Drone)
+        {
+            var pauseState = new DroneStats.PauseState(PlayerController.instance.playerDrones.followingDrones[0], this.transform.position);
+            PlayerController.instance.playerDrones.followingDrones[0].stateMachine.TransitionTo(pauseState);
         }
     }
 

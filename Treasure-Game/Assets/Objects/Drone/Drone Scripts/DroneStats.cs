@@ -142,5 +142,21 @@ public class DroneStats : MonoBehaviour
         public override bool IsBusy() => true;
 
     }
+
+    public class PauseState : DroneState
+    {
+        public PauseState(DroneController drone, Vector3 destination) : base(drone)
+        {
+            drone.SetDestination(destination);
+        }
+
+        public override void Execute()
+        {
+            drone.MoveAndPauseAtDestination();
+            drone.transform.rotation = Quaternion.identity;
+        }
+
+        public override bool IsBusy() => true;
+    }
 }
 
