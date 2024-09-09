@@ -8,6 +8,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float deceleration;
     [SerializeField] private float additionalGravity = 10f;
     [SerializeField] private float jumpHeight;
+    [SerializeField] private float jumpDecramentAmount;
 
     [Header("Raycast Settings")]
     [SerializeField] private float sphereRadius;
@@ -50,23 +51,49 @@ public class PlayerMovement : MonoBehaviour
 
         Quaternion targetRotation = Quaternion.Euler(0, transform.eulerAngles.y + mouseX, 0);
         rb.MoveRotation(targetRotation);
+
     }
 
     private void CheckIfTouchingGround()
     {
-        if (!Physics.CheckSphere(transform.position + Vector3.down * (sphereRadius * sphereDownwardOffset), sphereRadius, groundLayer))
+        RaycastHit hit;
+
+        // Cast a ray downwards to detect ground and get the normal of the surface
+        if (Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, out hit, sphereDownwardOffset + 0.1f, groundLayer))
         {
-            isGrounded = false;
+            isGrounded = true;
+
+            // If not jumping, apply force along the surface normal
             if (!isJumping)
             {
-                rb.AddForce(Vector3.down * additionalGravity, ForceMode.Acceleration);
+                Vector3 downwardForce = Vector3.Project(Vector3.down * additionalGravity, hit.normal);
+                rb.AddForce(downwardForce, ForceMode.Acceleration);
+
+                // Visualize the downward force
+                Debug.DrawRay(transform.position, downwardForce, Color.red);
             }
+
+            // Visualize the normal of the surface we are standing on
+            Debug.DrawRay(hit.point, hit.normal * 2f, Color.green);
         }
         else
         {
-            isGrounded = true;
+            isGrounded = false;
+
+            // If not grounded, apply standard downward gravity
+            if (!isJumping)
+            {
+                Vector3 downwardForce = Vector3.down * additionalGravity;
+                rb.AddForce(downwardForce, ForceMode.Acceleration);
+
+                // Visualize the downward force in freefall
+                Debug.DrawRay(transform.position, downwardForce, Color.blue);
+            }
         }
     }
+
+
+
 
     private void JumpPhysics()
     {
@@ -93,7 +120,7 @@ public class PlayerMovement : MonoBehaviour
                 jumpForce = jumpForce / 2;
 
             // Gradually decrease jumpForce to make it smoother
-            jumpForce -= 25;
+            jumpForce -= jumpDecramentAmount;
             Debug.Log(jumpForce);
 
             if (jumpForce <= 0)

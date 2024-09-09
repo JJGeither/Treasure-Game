@@ -16,6 +16,7 @@ public class ReticleController : MonoBehaviour
         if (cameraSystem == null)
         {
             Debug.LogError("Camera system is missing.");
+            cameraSystem = Camera.main;
         }
     }
 
